@@ -1,5 +1,5 @@
 #EXTM3U
-#EXTINF:-1 group-title="PREMIUM", Kora Live Stream
-https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8|User-Agent=Mozilla/5.0&Referer=https://rwtiaaaaaaaa.kora-live-live.info/
-#EXTINF:-1 group-title="PREMIUM", Amazon High Speed
-https://s3.eu-north-1.amazonaws.com/196.a33/hls/1/stream.m3u8|User-Agent=VLC/3.0.18 LibVLC/3.0.18
+#EXTINF:-1 group-title="LIVE HD", Yalla Shoot - CH1
+https://rwtiaaaaaaaa.yallaliveshoot.online/hls/ch1/live/index.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) &Referer=https://rwtiaaaaaaaa.yallaliveshoot.online/
+#EXTINF:-1 group-title="LIVE HD", Premium Server - Source 2
+https://axfgvvsvgwi.com/jmkubwvxbiucm?uQrlpAYR=3&xAoHOJaF=4&ufUzGNCP=5258894|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) &Referer=https://31.wwwkoora.com/
