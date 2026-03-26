@@ -1,5 +1,5 @@
 #EXTM3U
-#EXTINF:-1 group-title="PREMIUM", My Discovered Stream 1
-https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8
-#EXTINF:-1 group-title="PREMIUM", Amazon S3 Storage
-https://s3.eu-north-1.amazonaws.com/196.a33/hls/1/stream.m3u8
+#EXTINF:-1 group-title="PREMIUM", Kora Live Stream
+https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8|User-Agent=Mozilla/5.0&Referer=https://rwtiaaaaaaaa.kora-live-live.info/
+#EXTINF:-1 group-title="PREMIUM", Amazon High Speed
+https://s3.eu-north-1.amazonaws.com/196.a33/hls/1/stream.m3u8|User-Agent=VLC/3.0.18 LibVLC/3.0.18
