@@ -1,70 +1,69 @@
 import requests
 import re
-import os
+import concurrent.futures
 
-# 1. قائمة المصادر (IPTV + VOD Libraries)
-# أضفت لك روابط تحتوي على آلاف الأفلام والمسلسلات المحدثة
-M3U_SOURCES = [
+# تقنيات البحث (Dorks) لجلب قوائم جديدة من كل الإنترنت
+SEARCH_QUERIES = [
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/ar.m3u",
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/be.m3u",
     "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic.m3u",
-    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u",
     "https://raw.githubusercontent.com/Tiptop-IPTV/free/main/channels/ar.m3u",
-    "https://iptv-org.github.io/iptv/languages/ara.m3u",
-    "https://raw.githubusercontent.com/freetv-app/freetv-app/master/playlists/playlist_ar.m3u"
+    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u",
+    # إضافة روابط API عامة تبحث عن ملفات m3u في GitHub تلقائياً
+    "https://api.github.com/search/code?q=extension:m3u+beIN+sports",
+    "https://api.github.com/search/code?q=extension:m3u+Netflix+arabic"
 ]
 
-# 2. مواقع الأفلام للزحف (EgyBest, Akwam, إلخ)
-# ملاحظة: هذه المواقع تغير نطاقاتها (Domains) دائماً، لذا نعتمد على روابط الـ API والـ Raw المتجددة
-VOD_SITES = [
-    "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic_movies.m3u",
-    "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic_series.m3u"
-]
+def fetch_content(url):
+    try:
+        # انتحال شخصية متصفح حقيقي لتجنب الحظر
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        r = requests.get(url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            return r.text
+    except:
+        return ""
+
+def extract_links(text):
+    # ريجيكس (Regex) متطور لصيد أي رابط IPTV أو VOD في أي نص
+    return re.findall(r'(#EXTINF:-1.*)\n(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)', text)
 
 def main():
-    # الهيدر ليدعم البوسترات والترتيب
     final_list = "#EXTM3U x-tvg-url=\"http://epg.itv.re/epg.xml.gz\"\n"
     seen_links = set()
+    
+    print("🕵️ جاري تفعيل وضع الصياد العالمي...")
 
-    print("🚀 Starting the Global Scraper...")
+    # استخدام ThreadPoolExecutor لتسريع البحث (Multi-threading)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(fetch_content, SEARCH_QUERIES))
 
-    # دمج كل المصادر في قائمة واحدة
-    all_sources = M3U_SOURCES + VOD_SITES
-
-    for src in all_sources:
-        try:
-            print(f"🔍 Scraping: {src}")
-            r = requests.get(src, timeout=20)
-            if r.status_code == 200:
-                # استخراج البيانات بدقة (اسم المحتوى، اللوجو، الرابط)
-                matches = re.findall(r'(#EXTINF:-1.*)\n(http.*)', r.text)
+    for content in results:
+        matches = extract_links(content)
+        for info, link in matches:
+            link = link.strip()
+            # التأكد من عدم التكرار وصحة الرابط
+            if link not in seen_links and (link.endswith('.m3u8') or link.endswith('.mp4') or link.endswith('.mkv')):
+                info_l = info.lower()
                 
-                for info, link in matches:
-                    link = link.strip()
-                    if link not in seen_links:
-                        info_lower = info.lower()
-                        
-                        # --- تصنيف المجلدات (Folders) لترتيب التطبيق ---
-                        if any(x in info_lower for x in ["bein", "ssc", "sport", "كأس"]):
-                            info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"⚽ SPORTS LIVE\"")
-                        elif any(x in info_lower for x in ["movie", "فيلم", "film", "netflix", "ايجي بيست", "egybest"]):
-                            info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"🍿 MOVIES LIBRARY\"")
-                        elif any(x in info_lower for x in ["series", "مسلسل", "حلقة", "season", "episode"]):
-                            info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"📺 SERIES LIBRARY\"")
-                        elif "cinema" in info_lower or "سينمانا" in info_lower:
-                            info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"🎬 CINEMANA VOD\"")
-                        else:
-                            info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"🌍 GENERAL TV\"")
-                        
-                        final_list += f"{info}\n{link}\n"
-                        seen_links.add(link)
-        except Exception as e:
-            print(f"⚠️ Error in source {src}: {e}")
-            continue
+                # تصنيف ذكي جداً بناءً على محتوى الرابط
+                if any(x in info_l for x in ["bein", "ssc", "sport", "match"]):
+                    info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"⚽ BEIN & SPORTS\"")
+                elif any(x in info_l for x in ["movie", "فيلم", "egybest", "نتفلكس", "cinema"]):
+                    info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"🎬 GLOBAL MOVIES\"")
+                elif any(x in info_l for x in ["series", "مسلسل", "episode", "season"]):
+                    info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"📺 GLOBAL SERIES\"")
+                else:
+                    info = info.replace("#EXTINF:-1", "#EXTINF:-1 group-title=\"🌐 GLOBAL CHANNELS\"")
+                
+                final_list += f"{info}\n{link}\n"
+                seen_links.add(link)
 
-    # حفظ الملف النهائي في المستودع
+    # حفظ الحصيلة الضخمة
     with open("playlist.m3u", "w", encoding="utf-8") as f:
         f.write(final_list)
     
-    print(f"✅ Finished! Total unique items found: {len(seen_links)}")
+    print(f"✅ تم صيد {len(seen_links)} رابط من حول العالم!")
 
 if __name__ == "__main__":
     main()
