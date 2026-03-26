@@ -1,44 +1,43 @@
 import requests
 import re
-from googlesearch import search
 
+# مصادر عالمية ضخمة (Live + VOD)
 SOURCES = [
-    "https://iptv-org.github.io/iptv/languages/ara.m3u",
-    "https://t.me/s/iptv442web",
-    "https://t.me/s/Z_Y_X_K",
-    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u"
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/ar.m3u", # قنوات لايف
+    "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic.m3u", # أفلام ومسلسلات
+    "https://raw.githubusercontent.com/Tiptop-IPTV/free/main/channels/ar.m3u", # تحديث يومي رياضي
+    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u" # مكتبة متنوعة
 ]
 
-def check_link(url):
-    try:
-        r = requests.head(url, timeout=3)
-        return r.status_code == 200
-    except:
-        return False
+def clean_info(info):
+    # وظيفة لتنظيم التصنيفات لكي تظهر في التطبيق بشكل مرتب (Folders)
+    if "bein" in info.lower() or "ssc" in info.lower():
+        return info.replace("#EXTINF:-1", "#EXTINF:-1 group-title="SPORTS"")
+    elif "film" in info.lower() or "movie" in info.lower() or "فيلم" in info:
+        return info.replace("#EXTINF:-1", "#EXTINF:-1 group-title="MOVIES"")
+    elif "series" in info.lower() or "مسلسل" in info:
+        return info.replace("#EXTINF:-1", "#EXTINF:-1 group-title="SERIES"")
+    else:
+        return info.replace("#EXTINF:-1", "#EXTINF:-1 group-title="ARABIC TV"")
 
 def main():
-    final_list = "#EXTM3U\n"
-    seen = set()
-    
-    # البحث التلقائي عن روابط جديدة في جوجل
-    print("Searching for new links...")
-    try:
-        for url in search('filetype:m3u arabic 2026', num_results=5):
-            SOURCES.append(url)
-    except: pass
+    final_list = "#EXTM3U x-tvg-url="http://epg.itv.re/epg.xml.gz"\n"
+    seen_links = set()
 
     for src in SOURCES:
         try:
-            res = requests.get(src, timeout=10)
-            matches = re.findall(r'(?:#EXTINF:.*,(.*)\n|([^>\n]+)\s*<a[^>]+href=")?(https?://[^\s<>"]+\.(?:m3u8|mp4|mkv|ts)[^\s<>"]*)', res.text)
-            for m_name, t_name, link in matches:
-                link = link.strip()
-                if link not in seen and check_link(link):
-                    name = (m_name or t_name or "Premium").strip()
-                    group = "MOVIES" if any(x in link.lower() for x in [".mp4", ".mkv"]) else "LIVE"
-                    final_list += f'#EXTINF:-1 group-title="{group}", {name}\n{link}\n'
-                    seen.add(link)
-        except: continue
+            # زيادة وقت الانتظار لأن المصادر ضخمة
+            response = requests.get(src, timeout=30)
+            if response.status_code == 200:
+                matches = re.findall(r'(#EXTINF.*)\n(http.*)', response.text)
+                for info, link in matches:
+                    link = link.strip()
+                    if link not in seen_links:
+                        organized_info = clean_info(info)
+                        final_list += f"{organized_info}\n{link}\n"
+                        seen_links.add(link)
+        except:
+            continue
 
     with open("playlist.m3u", "w", encoding="utf-8") as f:
         f.write(final_list)
