@@ -1,29 +1,39 @@
-name: Auto Update IPTV
+name: Auto Update IPTV & VOD
 on:
   schedule:
-    - cron: '0 */2 * * *' # يشتغل كل ساعتين تلقائياً
-  workflow_dispatch: # زر لتشغيله يدوياً
+    - cron: '0 */2 * * *' # يشتغل تلقائياً كل ساعتين
+  workflow_dispatch: # يتيح لك تشغيله يدوياً بضغطة زر
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # ضروري جداً للسماح للسيرفر بتحديث الملفات
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
-        run: pip install requests
-      - name: Run Script
+        run: |
+          pip install requests telethon
+
+      - name: Run IPTV Hunter Script
+        env:
+          # هنا نقوم بتمهيد الطريق للسكربت ليتعرف على مفاتيح التليجرام
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
         run: python collect.py
-      - name: Commit and Push
+
+      - name: Commit and Push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add playlist.m3u
-          git commit -m "Update Playlist" || exit 0
+          # إذا لم يتغير شيء، السكربت لن يتوقف بل سيكمل بنجاح
+          git commit -m "Update Playlist: Added new Live & VOD links" || exit 0
           git push
