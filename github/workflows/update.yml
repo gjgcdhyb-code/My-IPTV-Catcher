@@ -1,16 +1,15 @@
-name: Auto Update IPTV Hunter
+name: Auto Update IPTV
 
 on:
   schedule:
-    - cron: '0 */2 * * *' # يشتغل تلقائياً كل ساعتين
-  workflow_dispatch: # يخليك تشغله يدوياً بكبسة زر للتجربة
+    - cron: '0 */2 * * *' # يشتغل كل ساعتين
+  workflow_dispatch: # زر التشغيل اليدوي
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # ضروري جداً لكي يستطيع البوت رفع الملف الجديد للمستودع
-
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,18 +22,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # في حال نسيت ملف ريكوايرمنت، هذا السطر يضمن تثبيت المكتبات الأساسية
-          pip install requests beautifulsoup4 cloudscraper googlesearch-python
+          pip install -r requirements.txt
 
-      - name: Run Integrated Hunter Script
-        run: python collect.py # تأكد أن هذا هو اسم ملف البايثون اللي فيه كود الصيد المتكامل
+      - name: Run Script
+        run: python collect.py
 
-      - name: Commit and Push changes
+      - name: Commit and Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add playlist.m3u
-          # السطر القادم يمنع السكربت من التوقف إذا لم يجد روابط جديدة (No changes)
-          git commit -m "Auto-Update: New Streams Captured $(date)" || exit 0
+          git commit -m "Update Playlist with New Streams" || exit 0
           git push
