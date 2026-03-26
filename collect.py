@@ -5,10 +5,13 @@ def main():
             "name": "Yalla Shoot - CH1",
             "url": "https://rwtiaaaaaaaa.yallaliveshoot.online/hls/ch1/live/index.m3u8",
             "ref": "https://rwtiaaaaaaaa.yallaliveshoot.online/"
-            "name": "Yalla Shoot - CH1",
-            kora_url = "https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8"
 
         },
+          links = [
+        {
+         "name": "Yalla Shoot - CH2",
+            kora_url = "https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8"
+     },
         {
             "name": "Premium Server - Source 2",
             "url": "https://axfgvvsvgwi.com/jmkubwvxbiucm?uQrlpAYR=3&xAoHOJaF=4&ufUzGNCP=5258894",
