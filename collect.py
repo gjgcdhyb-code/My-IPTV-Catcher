@@ -1,31 +1,39 @@
 import requests
 import re
 
-# مصادر قوية (يمكنك إضافة روابط قنوات تليجرام أو مواقع هنا)
+# مصادر ضخمة ومحدثة باستمرار لقنوات عربية ورياضية
 SOURCES = [
-    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/ar.m3u",
-    "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u"
+    "https://iptv-org.github.io/iptv/languages/ara.m3u",
+    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u",
+    "https://raw.githubusercontent.com/freetv-app/freetv-app/master/playlists/playlist_ar.m3u"
 ]
 
 def check_link(url):
     try:
-        # فحص سريع للتأكد أن الرابط شغال وغير منقطع
-        r = requests.head(url, timeout=3)
+        # فحص سريع
+        r = requests.get(url, timeout=5, stream=True)
         return r.status_code == 200
     except:
         return False
 
 def main():
     final_list = "#EXTM3U\n"
+    seen_links = set() # لمنع تكرار الروابط
+
     for src in SOURCES:
-        response = requests.get(src)
-        # استخراج روابط BeIN و OSN باستخدام Regex
-        matches = re.findall(r'(#EXTINF.*(?:beIN|OSN|SSC).*)\n(http.*)', response.text)
-        
-        for info, link in matches:
-            if check_link(link):
-                # إضافة وسوم الجودة لضمان 1080p إذا توفرت
-                final_list += f"{info}\n{link}\n"
+        try:
+            response = requests.get(src, timeout=15)
+            # استخراج اسم القناة والرابط بدقة أكبر
+            matches = re.findall(r'(#EXTINF.*)\n(http.*)', response.text)
+            
+            for info, link in matches:
+                link = link.strip()
+                if link not in seen_links:
+                    # سنضيف القنوات العربية كلها حالياً للتجربة
+                    final_list += f"{info}\n{link}\n"
+                    seen_links.add(link)
+        except:
+            continue
     
     with open("playlist.m3u", "w", encoding="utf-8") as f:
         f.write(final_list)
