@@ -1,42 +1,89 @@
 import requests
 import re
+import cloudscraper
 
-# مصادر ضخمة ومفتوحة
-SOURCES = [
-    "https://raw.githubusercontent.com/iptv-org/iptv/master/index.m3u",
-    "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic.m3u",
-    "https://raw.githubusercontent.com/Tiptop-IPTV/free/main/channels/ar.m3u"
+# قائمة المواقع اللي دزيتها (اللايف والسينما)
+MY_SITES = [
+    "https://news1.site88.top/koranews/",
+    "https://www.new-yalla-shot.com/",
+    "https://www.elahmad.com/tv/live-arabic-channels.php",
+    "https://livetv.aflam4you.net/",
+    "https://hyzrsport.com/channel/",
+    "http://tv.shabakaty.com/",
+    "http://azrotv.com/iphone/arabic/",
+    "https://habbabihd.com/tv/",
+    "https://www.qanwatlive.com/",
+    "https://iptv-kw.com/",
+    "https://tviraq.net/",
+    "https://cinema.shashety.com/",
+    "https://cimanow.cc/",
+    "https://cinemana.shabakaty.com/",
+    "https://egibest.my/",
+    "https://i-egybest.com/",
+    "https://hd1.brstej.com/",
+    "https://www.farfeshplus.com/",
+    "https://watanflix.com/ar",
+    "https://ramadan-series.com/",
+    "https://cimafree.info/",
+    "https://w7.almstba.tv/",
+    "https://asd.pics/",
+    "https://larozaa.website/",
+    "https://topcinema.fan/"
 ]
 
-def main():
-    final_data = '#EXTM3U x-tvg-url="http://epg.itv.re/epg.xml.gz"\n'
-    added_links = set()
-    
-    print("🚀 جاري صيد القنوات والأفلام...")
-    
-    for url in SOURCES:
-        try:
-            r = requests.get(url, timeout=20)
-            if r.status_code == 200:
-                # ريجيكس متطور لصيد الاسم والرابط معاً
-                matches = re.findall(r'(#EXTINF:-1.*)\n(http.*)', r.text)
-                for info, link in matches:
-                    link = link.strip()
-                    if link not in added_links:
-                        # تصنيف ذكي للمجلدات
-                        info_lower = info.lower()
-                        if "bein" in info_lower or "sport" in info_lower:
-                            info = info.replace("#EXTINF:-1", '#EXTINF:-1 group-title="⚽ SPORTS"')
-                        elif "movie" in info_lower or "فيلم" in info_lower:
-                            info = info.replace("#EXTINF:-1", '#EXTINF:-1 group-title="🎬 MOVIES"')
-                        
-                        final_data += f"{info}\n{link}\n"
-                        added_links.add(link)
-        except: continue
+def scrape_target(url):
+    results = []
+    try:
+        # استخدام cloudscraper لتجاوز حماية Cloudflare الموجودة في إيجي بيست وغيره
+        scraper = cloudscraper.create_scraper()
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        r = scraper.get(url, headers=headers, timeout=15)
+        
+        if r.status_code == 200:
+            # صيد روابط البث المباشر (m3u8)
+            streams = re.findall(r'(http[s]?://[^\s"\']+\.m3u8[^\s"\']*)', r.text)
+            for s in streams:
+                results.append(("LIVE", s))
+            
+            # صيد روابط الأفلام والمسلسلات (mp4 / mkv)
+            vods = re.findall(r'(http[s]?://[^\s"\']+\.(?:mp4|mkv))', r.text)
+            for v in vods:
+                results.append(("VOD", v))
+    except:
+        pass
+    return results
 
+def main():
+    final_content = "#EXTM3U x-tvg-url=\"http://epg.itv.re/epg.xml.gz\"\n"
+    unique_links = set()
+    
+    print(f"🚀 البدء بفحص {len(MY_SITES)} موقع من اختيارك...")
+
+    for site in MY_SITES:
+        print(f"🔍 فحص: {site}")
+        found_items = scrape_target(site)
+        
+        for type, link in found_items:
+            if link not in unique_links:
+                # ترتيب المجموعات بناءً على محتوى الرابط أو الموقع
+                if "shabakaty" in link or "cinemana" in link:
+                    group = "🇮🇶 SHABAKATY & CINEMANA"
+                elif type == "LIVE" or "sport" in link.lower() or "bein" in link.lower():
+                    group = "⚽ LIVE & SPORTS"
+                else:
+                    group = "🎬 MOVIES & SERIES"
+                
+                # تنظيف الاسم (أخذ آخر جزء من الرابط كإسم)
+                name = link.split('/')[-1].split('?')[0][:40]
+                
+                final_content += f'#EXTINF:-1 group-title="{group}",{name}\n{link}\n'
+                unique_links.add(link)
+
+    # حفظ النتيجة في ملفك الموحد
     with open("playlist.m3u", "w", encoding="utf-8") as f:
-        f.write(final_data)
-    print(f"✅ تم جمع {len(added_links)} رابط.")
+        f.write(final_content)
+    
+    print(f"✅ تم بنجاح! السكربت جمع {len(unique_links)} رابط مباشر من مواقعك.")
 
 if __name__ == "__main__":
     main()
