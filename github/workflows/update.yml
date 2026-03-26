@@ -1,4 +1,4 @@
-name: Auto Update IPTV & VOD
+name: Auto Update IPTV
 on:
   schedule:
     - cron: '0 */2 * * *'
@@ -22,10 +22,7 @@ jobs:
         run: |
           pip install requests beautifulsoup4 lxml telethon cloudscraper
 
-      - name: Run Scraper
-        env:
-          TG_API_ID: ${{ secrets.TG_API_ID }}
-          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+      - name: Run Script
         run: python collect.py
 
       - name: Commit and Push
@@ -33,5 +30,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add playlist.m3u
-          git commit -m "Updated: Added latest Movies & Series" || exit 0
+          git commit -m "Update Playlist" || exit 0
           git push
