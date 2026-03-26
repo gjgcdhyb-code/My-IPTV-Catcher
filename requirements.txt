@@ -1,4 +1,4 @@
+selenium
+webdriver-manager
 requests
-beautifulsoup4
-cloudscraper
-googlesearch-python
+urllib3
