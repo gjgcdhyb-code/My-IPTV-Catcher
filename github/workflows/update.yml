@@ -1,9 +1,9 @@
-name: Auto Update IPTV
+name: Auto Update IPTV Hunter
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
-  workflow_dispatch:
+    - cron: '0 */2 * * *' # تحديث كل ساعتين
+  workflow_dispatch: # زر التشغيل اليدوي
 
 jobs:
   build:
@@ -22,9 +22,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 cloudscraper
+          pip install requests beautifulsoup4 cloudscraper brotli
 
-      - name: Run Script
+      - name: Run Hunter Script
         run: python collect.py
 
       - name: Commit and Push
@@ -32,5 +32,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add playlist.m3u
-          git commit -m "Update Playlist" || exit 0
+          git commit -m "Auto-Update: New Streams $(date)" || exit 0
           git push
