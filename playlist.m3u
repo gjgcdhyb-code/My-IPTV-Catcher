@@ -1,5 +1,7 @@
 #EXTM3U
 #EXTINF:-1 group-title="LIVE HD", Yalla Shoot - CH1
 https://rwtiaaaaaaaa.yallaliveshoot.online/hls/ch1/live/index.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) &Referer=https://rwtiaaaaaaaa.yallaliveshoot.online/
+#EXTINF:-1 group-title="LIVE HD", Yalla Shoot - CH2
+kora_url = "https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8"
 #EXTINF:-1 group-title="LIVE HD", Premium Server - Source 2
 https://axfgvvsvgwi.com/jmkubwvxbiucm?uQrlpAYR=3&xAoHOJaF=4&ufUzGNCP=5258894|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) &Referer=https://31.wwwkoora.com/
