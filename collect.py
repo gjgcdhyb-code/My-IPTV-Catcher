@@ -5,6 +5,9 @@ def main():
             "name": "Yalla Shoot - CH1",
             "url": "https://rwtiaaaaaaaa.yallaliveshoot.online/hls/ch1/live/index.m3u8",
             "ref": "https://rwtiaaaaaaaa.yallaliveshoot.online/"
+            "name": "Yalla Shoot - CH1",
+            kora_url = "https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8"
+
         },
         {
             "name": "Premium Server - Source 2",
