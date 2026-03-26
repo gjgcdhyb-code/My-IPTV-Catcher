@@ -1,11 +1,5 @@
-#EXTM3U x-tvg-url="http://epg.itv.re/epg.xml.gz"
-#EXTINF:-1 group-title="⚽ SPORTS & LIVE",Playlist\&Quot;
-https://live94.vkuserlive.com/613504/live/CJHQOY5DfJI/playlist.m3u8\&quot;
-#EXTINF:-1 group-title="⚽ SPORTS & LIVE",Index
-http://sstvb1.vdmscdn.com/beinsport-1-sd/tracks-v1a1/index.m3u8
-#EXTINF:-1 group-title="⚽ SPORTS & LIVE",Playlist\&Quot;
-https://live127.vkuserlive.com/639908/live/54nI1vRAf-g/playlist.m3u8\&quot;
-#EXTINF:-1 group-title="⚽ SPORTS & LIVE",Playlist
-http://149.202.199.52:9000/live/1436654213/playlist.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjY4LCJpYXQiOjE0ODMwMzE1MDEsIm5iZiI6MTQ4MzAzMTUwMX0.d-iNozy77zbGLIib7C-wHXtKQ60ptPPfkRxa7qwwasY
-#EXTINF:-1 group-title="🎬 MOVIES & SERIES",D33C5A8F5E1E46Ec8A652Ae8E4651E18 Msd   Combo Ad   S26 Campaign   15Sec   1X1   Music Logo Text B
-https://staticassets-creator-design.criteo.net/design/dt/101399/1760637506/d33c5a8f5e1e46ec8a652ae8e4651e18_msd_-_combo_ad_-_s26_campaign_-_15sec_-_1x1_-_music_logo_text_b.mp4
+#EXTM3U
+#EXTINF:-1 group-title="PREMIUM", My Discovered Stream 1
+https://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8
+#EXTINF:-1 group-title="PREMIUM", Amazon S3 Storage
+https://s3.eu-north-1.amazonaws.com/196.a33/hls/1/stream.m3u8
