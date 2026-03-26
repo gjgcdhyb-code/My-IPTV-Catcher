@@ -2,8 +2,8 @@ name: Auto Update IPTV
 
 on:
   schedule:
-    - cron: '0 */2 * * *' # يشتغل كل ساعتين
-  workflow_dispatch: # زر التشغيل اليدوي
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install requests beautifulsoup4 cloudscraper
 
       - name: Run Script
         run: python collect.py
@@ -32,5 +32,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add playlist.m3u
-          git commit -m "Update Playlist with New Streams" || exit 0
+          git commit -m "Update Playlist" || exit 0
           git push
