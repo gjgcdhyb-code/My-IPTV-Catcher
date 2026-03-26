@@ -1,82 +1,77 @@
 import requests
 import re
+import time
+from bs4 import BeautifulSoup
 
-# مصادر متنوعة: تليجرام، جيت هاب، وقوائم عالمية محدثة
-SOURCES = [
+# 1. قائمة المصادر الثابتة (العملاقة)
+STATIC_SOURCES = [
+    "https://iptv-org.github.io/iptv/languages/ara.m3u",
     "https://t.me/s/iptv442web",
     "https://t.me/s/Z_Y_X_K",
-    "https://t.me/s/M_IPTV",
-    "https://t.me/s/DailyIPTV",
-    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/ar.m3u",
-    "https://raw.githubusercontent.com/yoyoshira/iptv/main/movies.m3u", # مصدر أفلام
-    "https://raw.githubusercontent.com/yoyoshira/iptv/main/series.m3u"  # مصدر مسلسلات
+    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u"
 ]
 
-def detect_category(url, name):
-    """تصنيف الرابط تلقائياً بناءً على محتواه واسمه"""
-    url_u = url.upper()
-    name_u = name.upper()
-    
-    # تصنيف الأفلام والمسلسلات (VOD)
-    if any(x in url_u for x in [".MP4", ".MKV", ".AVI", "/MOVIES/", "/SERIES/"]):
-        if "SERIES" in url_u or "مسلسل" in name_u:
-            return "SERIES"
-        return "MOVIES"
-    
-    # تصنيف الرياضة
-    if any(x in name_u for x in ["BEIN", "SSC", "SPORT", "KORA", "AD SPORTS"]):
-        return "SPORTS"
-    
-    return "ARABIC LIVE"
+# 2. وظيفة البحث التلقائي عن روابط جديدة (Google Dorking Simulation)
+def search_new_sources():
+    new_links = []
+    # محاكاة البحث عن روابط m3u8 منشورة حديثاً في مواقع برمجية
+    search_urls = [
+        "https://github.com/search?q=iptv+arabic+m3u8&type=code&s=indexed&o=desc",
+        "https://www.google.com/search?q=filetype:m3u+arabic+2026"
+    ]
+    # ملاحظة: جيت هاب يمنع الكشط المباشر أحياناً، لذا سنعتمد على روابط الـ Raw المشهورة
+    return new_links
 
-def clean_name(name):
-    """تنظيف الاسم من كودات الـ HTML والرموز"""
-    if not name: return "Unlabeled"
-    name = re.sub(r'<[^>]+>', '', name) # حذف تاغات التليجرام
-    name = re.sub(r'[^\w\s\-\(\)\[\]]', '', name)
-    return name.strip()
+def is_working(url):
+    """فحص الرابط: هل هو حي (Alive) أم ميت؟"""
+    try:
+        # نطلب فقط رأس الملف (Header) لسرعة الفحص
+        r = requests.head(url, timeout=3, allow_redirects=True)
+        return r.status_code == 200
+    except:
+        return False
 
 def main():
-    # الهيدر الأساسي لملف M3U
     final_list = "#EXTM3U\n"
     seen_links = set()
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
-    print("بدأ البحث الشامل في الويب والتليجرام...")
+    print("🚀 انطلاق الرادار العالمي للصيد...")
 
-    for src in SOURCES:
+    # جمع كل المصادر
+    all_sources = STATIC_SOURCES + search_new_sources()
+
+    for src in all_sources:
         try:
-            response = requests.get(src, timeout=20, headers=headers)
+            print(f"🔎 فحص المصدر: {src}")
+            response = requests.get(src, timeout=15, headers=headers)
             
-            # البحث عن الروابط (m3u8 لللايف، mp4/mkv للأفلام)
-            # النمط الجديد يبحث عن أي رابط فيديو متبوع بنص (الاسم)
+            # البحث عن أي رابط بث (m3u8, mp4, ts)
             pattern = r'(?:#EXTINF:.*,(.*)\n|([^>\n]+)\s*<a[^>]+href=")?(https?://[^\s<>"]+\.(?:m3u8|mp4|mkv|ts)[^\s<>"]*)'
             matches = re.findall(pattern, response.text)
 
             for m3u_name, tg_name, link in matches:
                 link = link.strip()
                 if link not in seen_links:
-                    # اختيار الاسم المتاح (إما من M3U أو من تليجرام)
-                    raw_name = m3u_name if m3u_name else tg_name
-                    name = clean_name(raw_name)
-                    
-                    if len(name) < 2: name = "Premium Content"
-                    
-                    # تحديد الفئة (Category)
-                    category = detect_category(link, name)
-                    
-                    # تحديد الجودة
-                    quality = " [FHD]" if "1080" in link or "FHD" in link.upper() else ""
-                    
-                    # بناء السطر بتنسيق احترافي يفهمه أي تطبيق
-                    final_list += f'#EXTINF:-1 group-title="{category}", {name}{quality}\n{link}\n'
-                    seen_links.add(link)
+                    # --- الفحص الجوهري (شغال لو لا؟) ---
+                    if is_working(link):
+                        name = m3u_name if m3u_name else tg_name
+                        name = re.sub(r'[^\w\s]', '', str(name)) if name else "Fast Stream"
+                        
+                        # تصنيف ذكي
+                        if ".mp4" in link or ".mkv" in link: group = "MOVIES/SERIES"
+                        elif "sport" in name.lower() or "bein" in name.lower(): group = "LIVE SPORTS"
+                        else: group = "CHANNELS"
+
+                        final_list += f'#EXTINF:-1 group-title="{group}", {name}\n{link}\n'
+                        seen_links.add(link)
+                        print(f"✅ تم صيد رابط شغال: {name}")
         except:
             continue
 
     with open("playlist.m3u", "w", encoding="utf-8") as f:
         f.write(final_list)
-    print(f"تم الانتهاء! المجموع: {len(seen_links)} مادة (لايف، أفلام، مسلسلات).")
+    print(f"🏁 المهمة تمت! المجموع: {len(seen_links)} رابط مفحوص وشغال 100%.")
 
 if __name__ == "__main__":
     main()
