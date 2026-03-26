@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 lxml telethon cloudscraper
+          pip install requests cloudscraper
 
       - name: Run Script
         run: python collect.py
