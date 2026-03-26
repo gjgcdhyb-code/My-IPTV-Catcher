@@ -1,81 +1,53 @@
 import requests
 import re
 
-# مصادر القنوات
-CHANNEL_SOURCES = [
-    "https://raw.githubusercontent.com/iptv-org/iptv/master/index.m3u"
+# المصادر العالمية - هذي المصادر "تفلتر" الروابط وتخلي بس الشغال
+SOURCES = [
+    "https://raw.githubusercontent.com/iptv-org/iptv/master/index.m3u",
+    "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic.m3u", # أفلام ومسلسلات عربية مباشرة
+    "https://raw.githubusercontent.com/Tiptop-IPTV/free/main/channels/ar.m3u", # قنوات رياضية
+    "https://raw.githubusercontent.com/Moebis/TV/master/playlist.m3u" # مكتبة VOD
 ]
-
-# مصادر أفلام (روابط مباشرة مجانية)
-MOVIE_SOURCES = [
-    "https://iptv-org.github.io/iptv/categories/movies.m3u"
-]
-
-SERIES_SOURCES = [
-    "https://iptv-org.github.io/iptv/categories/series.m3u"
-]
-
-def fetch_m3u(url):
-    try:
-        r = requests.get(url, timeout=10)
-        return re.findall(r'(#EXTINF:-1.*)\n(http.*)', r.text)
-    except:
-        return []
-
-def categorize(info):
-    text = info.lower()
-
-    if "bein" in text:
-        return "🔥 beIN SPORTS"
-    elif "sport" in text:
-        return "⚽ SPORTS"
-    elif "movie" in text:
-        return "🎬 MOVIES"
-    elif "series" in text:
-        return "📺 SERIES"
-    else:
-        return "🌍 OTHER"
 
 def main():
-    final = "#EXTM3U\n"
-    added = set()
+    final_data = "#EXTM3U x-tvg-url=\"http://epg.itv.re/epg.xml.gz\"\n"
+    added_links = set()
+    
+    print("🚀 جاري صيد القنوات والأفلام من السيرفرات العالمية...")
+    
+    for url in SOURCES:
+        try:
+            # إضافة User-Agent عشان المواقع ما تحظرك
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            r = requests.get(url, headers=headers, timeout=20)
+            
+            if r.status_code == 200:
+                # صيد الروابط والبيانات
+                items = re.findall(r'(#EXTINF:-1.*)\n(http.*)', r.text)
+                
+                for info, link in items:
+                    link = link.strip()
+                    if link not in added_links:
+                        # تصنيف ذكي للمجلدات
+                        info_lower = info.lower()
+                        if any(x in info_lower for x in ["bein", "sport", "ssc", "kora"]):
+                            info = re.sub(r'#EXTINF:-1', '#EXTINF:-1 group-title="🔥 SPORTS LIVE"', info)
+                        elif any(x in info_lower for x in ["movie", "فيلم", "egybest", "netflix"]):
+                            info = re.sub(r'#EXTINF:-1', '#EXTINF:-1 group-title="🎬 MOVIES LIBRARY"', info)
+                        elif any(x in info_lower for x in ["series", "مسلسل", "episode", "season"]):
+                            info = re.sub(r'#EXTINF:-1', '#EXTINF:-1 group-title="📺 SERIES LIBRARY"', info)
+                        else:
+                            info = re.sub(r'#EXTINF:-1', '#EXTINF:-1 group-title="🌍 GLOBAL TV"', info)
+                        
+                        final_data += f"{info}\n{link}\n"
+                        added_links.add(link)
+        except:
+            continue
 
-    print("🔍 Collecting channels...")
-    for src in CHANNEL_SOURCES:
-        for info, link in fetch_m3u(src):
-            if link in added:
-                continue
-
-            group = categorize(info)
-            info = re.sub(r'#EXTINF:-1', f'#EXTINF:-1 group-title="{group}"', info)
-
-            final += f"{info}\n{link}\n"
-            added.add(link)
-
-    print("🎬 Adding Movies...")
-    for src in MOVIE_SOURCES:
-        for info, link in fetch_m3u(src):
-            if link in added:
-                continue
-
-            info = re.sub(r'#EXTINF:-1', '#EXTINF:-1 group-title="🎬 MOVIES"', info)
-            final += f"{info}\n{link}\n"
-            added.add(link)
-
-    print("📺 Adding Series...")
-    for src in SERIES_SOURCES:
-        for info, link in fetch_m3u(src):
-            if link in added:
-                continue
-
-            info = re.sub(r'#EXTINF:-1', '#EXTINF:-1 group-title="📺 SERIES"', info)
-            final += f"{info}\n{link}\n"
-            added.add(link)
-
-    with open("ultimate_entertainment.m3u", "w", encoding="utf-8") as f:
-        f.write(final)
-
-    print(f"✅ Done! Total items: {len(added)}")
+    with open("playlist.m3u", "w", encoding="utf-8") as f:
+        f.write(final_data)
+        
+    print(f"✅ تم بنجاح! جمعنا {len(added_links)} مادة ترفيهية.")
 
 if __name__ == "__main__":
     main()
