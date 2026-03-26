@@ -6,101 +6,59 @@ import re
 import time
 from urllib.parse import unquote
 
-# 1. قائمة جميع الأهداف التي أرسلتها (لايف + سينما + مسلسلات)
+# الأهداف التي اكتشفتها أنت (الروابط التي تعطي Amazon S3 و HLS)
 TARGETS = [
-    "https://news1.site88.top/koranews/", 
-    "https://www.new-yalla-shot.com/",
-    "https://www.elahmad.com/tv/__aljazeera_sport.php", 
-    "https://livetv.aflam4you.net/beinsports-free-qatar-kora-direct-online_117.html",
-    "https://hyzrsport.com/channel/%D8%A8%D8%AB-%D9%85%D8%A8%D8%A7%D8%B4%D8%B1-%D9%82%D9%86%D9%88%D8%A7%D8%AA-bein-sports/",
-    "http://tv.shabakaty.com/", 
-    "https://www.elahmad.com/tv/live-arabic-channels.php",
-    "http://azrotv.com/iphone/arabic/", 
-    "https://habbabihd.com/tv/", 
-    "https://www.qanwatlive.com/",
-    "https://iptv-kw.com/", 
-    "https://tviraq.net/", 
-    "https://cinema.shashety.com/",
-    "https://cimanow.cc/", 
-    "https://cinemana.shabakaty.cc/CTV/#/home",
-    "https://cinemana.shabakaty.com/home", 
-    "https://egibest.my/", 
-    "https://i-egybest.com/",
-    "https://hd1.brstej.com/cat45.php?cat=ramdan2026", 
-    "https://www.farfeshplus.com/Rmd45.asp",
-    "https://watanflix.com/ar", 
-    "https://ramadan-series.com/", 
-    "https://cimafree.info/",
-    "https://w7.almstba.tv/", 
-    "https://asd.pics/main4/", 
-    "https://larozaa.website/home.24", 
-    "https://topcinema.fan/",
-    # مصادر إضافية لضمان المحتوى المباشر
-    "https://raw.githubusercontent.com/yousef777/IPTV-Free/main/arabic.m3u",
-    "https://raw.githubusercontent.com/IptvFree7/Iptv-Arabic/main/Movies.m3u"
+    "https://rwtiaaaaaaaa.kora-live-live.info/", # المصدر الأول
+    "https://s3.eu-north-1.amazonaws.com/"      # المصدر الثاني (Amazon S3)
 ]
 
 def main():
-    # 2. إعدادات المتصفح المخفي (Headless Chrome) لتجاوز الحماية
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
 
-    # تشغيل الدرايفر تلقائياً
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
-    all_links = set()
-    print(f"🚀 Starting Extraction on {len(TARGETS)} targets...")
+    final_links = set()
+
+    print(f"🎯 Targeted Extraction Started on your discovered links...")
 
     for site in TARGETS:
         try:
-            print(f"📡 Penetrating: {site}")
+            print(f"📡 Accessing: {site}")
             driver.get(site)
-            
-            # انتظار كافٍ لتشغيل الـ JavaScript وفك تشفير الروابط
-            time.sleep(12) 
+            time.sleep(10) # وقت كافٍ لجلب الـ m3u8
 
             html = driver.page_source
-            # صيد الروابط (Regex) التي تنتهي بـ m3u8, mp4, mkv, ts
-            links = re.findall(r'(https?://[^\s"\'<>]+(?:\.m3u8|\.mp4|\.mkv|\.ts)[^\s"\'<>]*)', html)
+            # صيد روابط البث المباشر فقط m3u8
+            links = re.findall(r'(https?://[^\s"\'<>]+(?:\.m3u8))', html)
 
             for link in links:
                 clean_link = unquote(link).replace('\\/', '/')
-                # استثناء الروابط غير الصالحة أو الإعلانية
-                if not any(x in clean_link for x in ["facebook", "google", "ads", "analytics", "twitter"]):
-                    all_links.add(clean_link)
-        except Exception as e:
-            print(f"⚠️ Skip {site}: {e}")
+                # فلترة لضمان الحصول على روابط شبيهة بالتي أرسلتها
+                if "amazon" in clean_link or "live" in clean_link:
+                    final_links.add(clean_link)
+        except:
+            continue
 
     driver.quit()
 
-    # 3. إنشاء ملف الـ M3U النهائي وتصنيفه
+    # كتابة الملف النهائي
     with open("playlist.m3u", "w", encoding="utf-8") as f:
-        f.write("#EXTM3U x-tvg-url=\"http://epg.itv.re/epg.xml.gz\"\n")
-        for i, link in enumerate(all_links):
-            link_low = link.lower()
-            
-            # تصنيف المحتوى بناءً على الرابط
-            if any(x in link_low for x in [".mp4", ".mkv", "cinema", "movie", "egybest", "film"]):
-                group = "🎬 MOVIES & SERIES"
-            elif any(x in link_low for x in ["sport", "bein", "kora", "live", "tv"]):
-                group = "⚽ SPORTS & LIVE"
-            else:
-                group = "🌍 CHANNELS"
-            
-            # استخراج اسم نظيف من الرابط
-            name = link.split('/')[-1].split('?')[0].replace('.mp4','').replace('.mkv','').replace('.m3u8','').replace('-',' ').replace('_',' ')
-            if len(name) < 5: 
-                name = f"Premium-Channel-{i}"
-            
-            f.write(f'#EXTINF:-1 group-title="{group}",{name.title()}\n{link}\n')
+        f.write("#EXTM3U\n")
+        # إضافة الروابط التي دزيتها أنت يدوياً لضمان وجودها دائماً
+        f.write(f'#EXTINF:-1 group-title="PREMIUM", My Discovered Stream 1\nhttps://rwtiaaaaaaaa.kora-live-live.info/hls/ch3/live/index.m3u8\n')
+        f.write(f'#EXTINF:-1 group-title="PREMIUM", Amazon S3 Storage\nhttps://s3.eu-north-1.amazonaws.com/196.a33/hls/1/stream.m3u8\n')
+        
+        # إضافة أي روابط جديدة يجدها السكربت من نفس المصادر
+        for i, link in enumerate(final_links):
+            if "index.m3u8" not in link and "stream.m3u8" not in link: # تجنب التكرار
+                f.write(f'#EXTINF:-1 group-title="AUTO-DETECT", New Stream {i}\n{link}\n')
 
-    print(f"✅ Mission Accomplished: {len(all_links)} links captured and saved to playlist.m3u")
+    print(f"✅ Finished! Your links are locked in playlist.m3u")
 
 if __name__ == "__main__":
     main()
