@@ -1,7 +1,7 @@
-name: Auto Collect Links
+name: Auto Update IPTV
 on:
   schedule:
-    - cron: '0 */6 * * *' # يعمل تلقائياً كل 6 ساعات
+    - cron: '0 */6 * * *' # يعمل كل 6 ساعات
   workflow_dispatch: # يسمح لك بتشغيله يدوياً
 
 jobs:
@@ -9,29 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
-
-      - name: Install Chrome
+          python-level: '3.x'
+      - name: Install dependencies
+        run: pip install requests
+      - name: Run Update Script
+        run: python update_links.py
+      - name: Commit and Push changes
         run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run Scraper
-        run: python collect.py
-
-      - name: Commit and Push
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
           git add playlist.m3u
-          git commit -m "Update Playlist" || exit 0
+          git commit -m "Auto-update IPTV link" || exit 0
           git push
